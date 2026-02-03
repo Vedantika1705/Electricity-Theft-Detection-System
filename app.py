@@ -91,14 +91,14 @@ def main():
     <div class="gradient header-banner">
         <h1>Electricity Theft Detection System</h1>
         <p style="font-size:20px; margin-top:12px;">
-            Circuit-Level Meter Risk Analysis Dashboard
+            Distribution Circuit Theft Risk Assessment
         </p>
     </div>
     """, unsafe_allow_html=True)
 
     # ---------------- INPUT SECTION ----------------
     st.markdown("<div class='section-gap'></div>", unsafe_allow_html=True)
-    st.markdown("## Meter Data Entry")
+    st.markdown("## Meter Reading Input")
 
     with st.form("meter_form"):
         col1, col2, col3 = st.columns(3, gap="large")
@@ -144,7 +144,7 @@ def main():
     # ---------------- METER OVERVIEW ----------------
     if st.session_state.meters:
         st.markdown("<div class='section-gap'></div>", unsafe_allow_html=True)
-        st.markdown("## Circuit Meter Overview")
+        st.markdown("## Meters Under Analysis")
 
         overview_df = pd.DataFrame(st.session_state.meters)
         overview_df.index = overview_df.index + 1
@@ -155,7 +155,7 @@ def main():
     # ---------------- ANALYSIS ----------------
     st.markdown("<div class='section-gap'></div>", unsafe_allow_html=True)
 
-    if st.button("Run Circuit Risk Analysis"):
+    if st.button("Run Theft Risk Analysis"):
         if not st.session_state.meters:
             st.warning("No meter data available.")
             return
@@ -185,7 +185,7 @@ def main():
 
         # ---------------- RESULTS TABLE (NO %) ----------------
         st.markdown("<div class='section-gap'></div>", unsafe_allow_html=True)
-        st.markdown("## Circuit Risk Assessment Results")
+        st.markdown("## Meter Risk Assessment Results")
 
         result_df = df[["Meter ID", "Risk Category"]].copy()
         result_df.index = range(1, len(result_df) + 1)
@@ -200,7 +200,7 @@ def main():
             st.markdown("<div class='section-gap'></div>", unsafe_allow_html=True)
             st.markdown(f"""
             <div class="gradient action-card">
-                <h3>High-Risk Meters – Detailed View</h3>
+                <h3>Meters Flagged for Immediate Inspection</h3>
                 <p><b>Total High-Risk Meters:</b> {len(high_df)}</p>
                 <ul>
                     {''.join(f"<li>{row['Meter ID']} – {row['Risk Percentage']}%</li>" for _, row in high_df.iterrows())}

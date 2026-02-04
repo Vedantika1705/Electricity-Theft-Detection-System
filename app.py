@@ -11,6 +11,109 @@ st.set_page_config(
     layout="wide"
 )
 
+# ================== GLOBAL CSS ==================
+st.markdown("""
+<style>
+html, body, [class*="css"] {
+    font-family: "Segoe UI", sans-serif;
+}
+
+.block-container {
+    padding-top: 3rem;
+    padding-bottom: 2rem;
+}
+
+/* Sidebar Title */
+.sidebar-title {
+    font-size: 24px;
+    font-weight: 900;
+    background: linear-gradient(135deg,#4f46e5,#7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Sidebar Navigation Bigger + Spacious */
+section[data-testid="stSidebar"] label {
+    font-size: 20px !important;
+    font-weight: 650 !important;
+    padding: 8px 0px !important;
+}
+
+/* Space between options */
+div[role="radiogroup"] label {
+    margin-bottom: 12px !important;
+}
+
+/* Purple Radio Bullet */
+div[role="radiogroup"] input[type="radio"] {
+    accent-color: #7c3aed !important;
+}
+
+/* Selected Page Gradient Text */
+div[role="radiogroup"] input:checked + div {
+    font-weight: 800 !important;
+    background: linear-gradient(135deg,#4f46e5,#7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Gradient Buttons */
+div.stButton > button {
+    background: linear-gradient(135deg,#4f46e5,#7c3aed);
+    color: white;
+    font-size: 16px;
+    border-radius: 10px;
+    padding: 10px 18px;
+    border: none;
+    transition: 0.25s;
+}
+
+div.stButton > button:hover {
+    background: linear-gradient(135deg,#4338ca,#6d28d9);
+    transform: scale(1.02);
+}
+
+/* Capability Cards */
+.cap-card {
+    background: rgba(255,255,255,0.06);
+    padding: 22px;
+    border-radius: 16px;
+    border: 1px solid rgba(150,150,150,0.25);
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
+    transition: 0.3s ease-in-out;
+    height: 100%;
+}
+
+.cap-card:hover {
+    border: 1px solid #7c3aed;
+    box-shadow: 0px 6px 18px rgba(124,58,237,0.25);
+    transform: translateY(-6px);
+}
+
+/* Metric Cards Tint */
+div[data-testid="stMetric"] {
+    background: linear-gradient(
+        135deg,
+        rgba(79,70,229,0.12),
+        rgba(124,58,237,0.10)
+    );
+    border: 1px solid rgba(124,58,237,0.25);
+    padding: 20px;
+    border-radius: 16px;
+    text-align: center;
+}
+
+/* Metric Label Gradient */
+div[data-testid="stMetricLabel"] > div {
+    font-size: 18px !important;
+    font-weight: 750 !important;
+    background: linear-gradient(135deg,#4f46e5,#7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # ================== LOAD MODEL ==================
 with open("theft_prediction_pipeline.pkl", "rb") as file:
     model = pickle.load(file)
@@ -22,7 +125,10 @@ location_df = pd.read_csv("meter_locations.csv")
 if "meters" not in st.session_state:
     st.session_state.meters = []
 
-# ================== FEATURES ==================
+if "page" not in st.session_state:
+    st.session_state.page = "Home"
+
+# ================== FEATURE COLUMNS ==================
 FEATURE_COLUMNS = [
     "Usage (kWh)",
     "TimeOfDay",
@@ -37,51 +143,50 @@ FEATURE_COLUMNS = [
 ]
 
 # ================== SIDEBAR ==================
-st.sidebar.title("⚡ Theft Detection")
-menu = st.sidebar.radio(
-    "Navigation",
-    ["🏠 Home", "➕ Add Meter", "📊 Analysis", "ℹ️ About"]
+st.sidebar.markdown(
+    "<div class='sidebar-title'>⚡ Theft Detection System</div>",
+    unsafe_allow_html=True
 )
 
-# ================== GLOBAL CSS ==================
-st.markdown("""
-<style>
-.fade-in {
-    animation: fadeIn 1s ease-in;
-}
-@keyframes fadeIn {
-    from {opacity:0; transform: translateY(20px);}
-    to {opacity:1; transform: translateY(0);}
-}
-</style>
-""", unsafe_allow_html=True)
+menu = st.sidebar.radio(
+    "Navigation",
+    ["Home", "Add Meter", "Analysis", "About"],
+    index=["Home", "Add Meter", "Analysis", "About"].index(st.session_state.page)
+)
 
-# ================== HOME ==================
-# ================== HOME ==================
-if menu == "🏠 Home":
+st.session_state.page = menu
+
+st.sidebar.markdown("---")
+
+if st.sidebar.button("Clear All Records"):
+    st.session_state.clear()
+    st.rerun()
+
+# =========================================================
+# ========================== HOME ==========================
+# =========================================================
+if st.session_state.page == "Home":
 
     st.markdown("""
-    <div class="fade-in" style="
-        padding:60px;
-        border-radius:25px;
-        background: linear-gradient(135deg,#4f46e5,#9333ea);
+    <div style="
+        padding:50px;
+        border-radius:18px;
+        background: linear-gradient(135deg,#4f46e5,#7c3aed);
         color:white;
         text-align:center;
-        box-shadow: 0px 10px 30px rgba(0,0,0,0.4);
+        box-shadow: 0px 6px 18px rgba(0,0,0,0.25);
     ">
-        <h1 style="font-size:48px;">⚡ Electricity Theft Detection System</h1>
-        <p style="font-size:22px; margin-top:10px;">
-             platform for detecting electricity theft & prioritizing inspections
+        <h1>Electricity Theft Detection System</h1>
+        <p style="font-size:18px; margin-top:10px;">
+            Machine learning platform for theft risk prediction and inspection prioritization.
         </p>
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown(" ")
 
-    # ================== LIVE SYSTEM STATS ==================
-    st.markdown("## 📊 Live System Overview")
-
-    c1, c2, c3 = st.columns(3)
+    # Live System Overview
+    st.subheader(" Live System Overview")
 
     total_meters = len(st.session_state.meters)
 
@@ -94,76 +199,94 @@ if menu == "🏠 Home":
         high_risk_count = 0
         avg_risk = 0
 
-    c1.metric("📟 Meters Analyzed", total_meters)
-    c2.metric("🚨 High Risk Meters", high_risk_count)
-    c3.metric("⚡ Average Theft Risk", f"{avg_risk}%")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Meters Analyzed", total_meters)
+    c2.metric("High Risk Alerts", high_risk_count)
+    c3.metric("Average Risk Score", f"{avg_risk}%")
 
+    st.markdown("---")
 
-    # ================== FEATURES ==================
-    st.markdown("## 🔍 Key Capabilities")
+    # Key Capabilities
+    st.subheader("Key Capabilities")
 
-    f1, f2, f3 = st.columns(3)
+    col1, col2, col3 = st.columns(3)
 
-    with f1:
+    with col1:
         st.markdown("""
-        ### 📊 Smart Consumption Analysis
-        - Detects abnormal usage patterns  
-        - Identifies voltage irregularities  
-        - Flags unusual spikes automatically
-        """)
+        <div class="cap-card">
+            <h3>📊 Smart Consumption Analysis</h3>
+            <ul>
+                <li>Detects abnormal usage patterns</li>
+                <li>Flags unusual spikes automatically</li>
+                <li>Monitors voltage irregularities</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
 
-    with f2:
+    with col2:
         st.markdown("""
-        ### 🧠 Machine Learning Engine
-        - Random Forest Classifier  
-        - SMOTE for class imbalance  
-        - Probability-based risk scoring
-        """)
+        <div class="cap-card">
+            <h3>🧠 Machine Learning Engine</h3>
+            <ul>
+                <li>Random Forest Classifier</li>
+                <li>SMOTE balancing for theft cases</li>
+                <li>Probability-based risk scoring</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
 
-    with f3:
+    with col3:
         st.markdown("""
-        ### 🗺 Location-Aware Detection
-        - Area-wise theft visualization  
-        - Interactive risk maps  
-        - Inspection priority ranking
-        """)
+        <div class="cap-card">
+            <h3>🗺 Location-Based Insights</h3>
+            <ul>
+                <li>Area-wise theft visualization</li>
+                <li>Interactive risk location map</li>
+                <li>Inspection priority support</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("---")
 
-    # ================== HOW IT WORKS ==================
-    st.markdown("## ⚙️ How the System Works")
+    # How System Works
+    st.subheader(" How the System Works")
 
     st.markdown("""
-    ➡️ **Step 1:** Meter data is collected (usage, voltage, payment delay, history)  
-    ➡️ **Step 2:** Machine learning model analyzes consumption behavior  
-    ➡️ **Step 3:** Theft risk percentage is generated  
-    ➡️ **Step 4:** High-risk meters are highlighted on map & table  
-    ➡️ **Step 5:** Inspection recommendations are provided
+    1. Meter data is collected (usage, voltage, payment delay, history).  
+    2. The ML model analyzes consumption behavior.  
+    3. Theft risk probability score is generated.  
+    4. High-risk meters are highlighted in dashboard and map.  
+    5. Authorities can prioritize inspections efficiently.  
     """)
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown(" ")
 
-    # ================== CTA ==================
-    st.info("👉 Use the **Add Meter** tab to input meter data and analyze theft risk in real-time.")
+    if st.button("Proceed to Meter Data Entry"):
+        st.session_state.page = "Add Meter"
+        st.rerun()
 
+# =========================================================
+# ======================= ADD METER ========================
+# =========================================================
+if st.session_state.page == "Add Meter":
 
-# ================== ADD METER ==================
-if menu == "➕ Add Meter":
-    st.markdown("## ➕ Add Meter")
+    st.title("Add Meter Record")
 
     with st.form("meter_form"):
+
         c1, c2, c3 = st.columns(3)
 
         with c1:
             meter_id = st.text_input("Meter ID")
-            usage = st.number_input("Usage (kWh)", 0.0)
-            voltage = st.number_input("Voltage Fluctuations", 0.0)
-            residents = st.number_input("Residents", 1)
+            usage = st.number_input("Usage (kWh)", min_value=0.0)
+            voltage = st.number_input("Voltage Fluctuations", min_value=0.0)
+            residents = st.number_input("Residents", min_value=1)
 
         with c2:
-            appliances = st.number_input("Appliance Count", 1)
-            avg_usage = st.number_input("Average Daily Usage", 0.0)
-            delay = st.number_input("Bill Payment Delay (Days)", 0)
+            appliances = st.number_input("Appliance Count", min_value=1)
+            avg_usage = st.number_input("Average Daily Usage", min_value=0.0)
+            delay = st.number_input("Bill Payment Delay (Days)", min_value=0)
 
         with c3:
             time_day = st.selectbox("Time of Day", ["Morning","Afternoon","Evening","Night"])
@@ -171,10 +294,10 @@ if menu == "➕ Add Meter":
             history = st.selectbox("Previous Theft History", ["No","Yes"])
             spike = st.selectbox("Unusual Usage Spike", ["No","Yes"])
 
-        submit = st.form_submit_button("➕ Add Meter")
+        submit = st.form_submit_button("Add Meter")
 
     if submit and meter_id:
-        # ===== Fetch location from CSV =====
+
         row = location_df[location_df["Meter ID"] == meter_id]
 
         if not row.empty:
@@ -203,15 +326,23 @@ if menu == "➕ Add Meter":
             "Longitude": lon
         })
 
-        st.success(f"✅ Meter added successfully (Area: {area})")
+        st.success(f"Meter added successfully (Area: {area})")
 
-# ================== ANALYSIS ==================
-if menu == "📊 Analysis":
-    st.markdown("## 📊 Risk Analysis Dashboard")
+    if st.button("Go to Risk Analysis Dashboard"):
+        st.session_state.page = "Analysis"
+        st.rerun()
 
+# =========================================================
+# ======================== ANALYSIS ========================
+# =========================================================
+if st.session_state.page == "Analysis":
+
+    st.title("Risk Analysis Dashboard")
+    st.markdown(" ")
     if not st.session_state.meters:
-        st.warning("Please add meters first.")
+        st.warning("Please add meter records first.")
     else:
+
         df = pd.DataFrame(st.session_state.meters)
 
         with st.spinner("Analyzing theft risk..."):
@@ -225,20 +356,29 @@ if menu == "📊 Analysis":
         )
 
         df["Inspection Recommendation"] = df["Risk %"].apply(
-            lambda x: "🚨 Immediate Inspection" if x > 60 else "🟢 Monitor"
+            lambda x: "Immediate Inspection Required"
+            if x > 60 else "Monitoring Recommended"
         )
 
-        high_risk = df[df["Risk %"] > 60]
-        if not high_risk.empty:
-            st.error(f"🚨 ALERT: {len(high_risk)} meter(s) require immediate inspection!")
+        st.markdown("### 📋 Risk Summary Table")
+        st.markdown(" ")
+        # Dark-mode friendly highlight
+        def highlight_high_risk(row):
+            if row["Risk Category"] == "High Risk":
+                return ["background-color: #dc2626; color: white; font-weight: bold;"] * len(row)
+            return [""] * len(row)
 
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Total Meters", len(df))
-        c2.metric("High Risk", len(high_risk))
-        c3.metric("Average Risk", f"{df['Risk %'].mean():.2f}%")
+        styled_df = df[[
+            "Meter ID", "Area", "Risk %", "Risk Category",
+            "Inspection Recommendation"
+        ]].style.apply(highlight_high_risk, axis=1)
 
-        # ================== MAP ==================
-        st.markdown("### 🗺 Theft Location Map")
+        st.dataframe(styled_df, use_container_width=True)
+        st.markdown(" ")
+
+        st.markdown("### 🗺 Theft Risk Location Map")
+        st.markdown(" ")
+
         map_fig = px.scatter_mapbox(
             df,
             lat="Latitude",
@@ -246,60 +386,40 @@ if menu == "📊 Analysis":
             color="Risk %",
             size="Risk %",
             hover_name="Meter ID",
-            hover_data=["Area","Risk %","Risk Category"],
+            hover_data=["Area", "Risk %", "Risk Category"],
             zoom=9,
-            height=450,
+            height=430,
             color_continuous_scale="Reds"
         )
-        map_fig.update_layout(mapbox_style="open-street-map")
-        st.plotly_chart(map_fig, use_container_width=True)
 
-        # ================== TABLE (FIXED VISIBILITY) ==================
-        def color_rows(row):
-            if row["Risk Category"] == "High Risk":
-                return ["background-color: #fecaca; color: black; font-weight: bold;"] * len(row)
-            else:
-                return ["background-color: #bbf7d0; color: black;"] * len(row)
-
-        st.markdown("### 📋 Detailed Risk Table")
-        st.dataframe(
-            df[[
-                "Meter ID",
-                "Area",
-                "Risk %",
-                "Risk Category",
-                "Inspection Recommendation"
-            ]].style.apply(color_rows, axis=1),
-            use_container_width=True
+        map_fig.update_layout(
+            mapbox_style="open-street-map",
+            margin={"r": 0, "t": 0, "l": 0, "b": 0}
         )
 
-# ================== ABOUT ==================
-if menu == "ℹ️ About":
-    st.markdown("""
-    <div style="
-        padding:30px;
-        border-radius:15px;
-        background: linear-gradient(135deg,#111827,#1f2933);
-        color:white;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-    ">
-        <h2>ℹ️ About</h2>
-        <h4>Electricity Theft Detection System</h4>
-        <p style="font-size:16px; line-height:1.6;">
-            This application is designed to assist electricity authorities in identifying
-            potential electricity theft using machine learning techniques.
-        </p>
-        <ul style="font-size:16px; line-height:1.8;">
-            <li>📍 Meter ID to Area mapping using CSV-based location data</li>
-            <li>🧠 Theft risk prediction based on consumption behavior</li>
-            <li>🗺️ Location-aware visualization of high-risk meters</li>
-            <li>🚨 Inspection prioritization using ML-based risk scoring</li>
-        </ul>
-    </div>
-    """, unsafe_allow_html=True)
+        st.plotly_chart(map_fig, use_container_width=True)
+        st.markdown(" ")
 
-# ================== RESET ==================
-st.sidebar.markdown("---")
-if st.sidebar.button("🔄 Reset Data"):
-    st.session_state.clear()
-    st.rerun()
+    if st.button("View Project Information"):
+        st.session_state.page = "About"
+        st.rerun()
+
+# =========================================================
+# ========================== ABOUT =========================
+# =========================================================
+if st.session_state.page == "About":
+
+    st.title("About This Project")
+
+    st.markdown("""
+    This application assists electricity authorities in detecting potential electricity theft
+    using machine learning based risk prediction.
+
+    **Core Features:**
+    - Theft risk prediction using Random Forest  
+    - Class imbalance correction using SMOTE  
+    - Location-aware visualization for inspection planning  
+    - Dashboard-based monitoring and reporting  
+    """)
+
+    st.success("Developed as an academic machine learning project.")

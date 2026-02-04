@@ -1,16 +1,28 @@
 import streamlit as st
 import pickle
 import pandas as pd
+import plotly.express as px
+import time
 
-# ---------------- LOAD TRAINED MODEL ----------------
+# ================== PAGE CONFIG ==================
+st.set_page_config(
+    page_title="Electricity Theft Detection",
+    page_icon="⚡",
+    layout="wide"
+)
+
+# ================== LOAD MODEL ==================
 with open("theft_prediction_pipeline.pkl", "rb") as file:
     model = pickle.load(file)
 
-# ---------------- SESSION STATE ----------------
+# ================== LOAD LOCATION CSV ==================
+location_df = pd.read_csv("meter_locations.csv")
+
+# ================== SESSION STATE ==================
 if "meters" not in st.session_state:
     st.session_state.meters = []
 
-# ---------------- FEATURE NAMES ----------------
+# ================== FEATURES ==================
 FEATURE_COLUMNS = [
     "Usage (kWh)",
     "TimeOfDay",
@@ -24,202 +36,270 @@ FEATURE_COLUMNS = [
     "UnusualUsageSpike"
 ]
 
-# ---------------- MAIN APP ----------------
-def main():
-    st.set_page_config(
-        page_title="Electricity Theft Detection System",
-        layout="wide"
-    )
+# ================== SIDEBAR ==================
+st.sidebar.title("⚡ Theft Detection")
+menu = st.sidebar.radio(
+    "Navigation",
+    ["🏠 Home", "➕ Add Meter", "📊 Analysis", "ℹ️ About"]
+)
 
-    # ---------------- STYLING ----------------
+# ================== GLOBAL CSS ==================
+st.markdown("""
+<style>
+.fade-in {
+    animation: fadeIn 1s ease-in;
+}
+@keyframes fadeIn {
+    from {opacity:0; transform: translateY(20px);}
+    to {opacity:1; transform: translateY(0);}
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ================== HOME ==================
+# ================== HOME ==================
+if menu == "🏠 Home":
+
     st.markdown("""
-    <style>
-        .section-gap { margin-top: 60px; }
-
-        .gradient {
-        
-           background-image: linear-gradient(to top, #5f72bd 0%, #9b23ea 100%);
-        }
-
-        .header-banner {
-            padding: 36px;
-            border-radius: 10px;
-            text-align: center;
-        }
-
-        .action-card {
-            padding: 40px;
-            border-radius: 12px;
-        }
-
-        .action-card h3 {
-            font-size: 30px;
-            margin-bottom: 14px;
-            color: white;
-        }
-
-        .action-card p, .action-card li {
-            font-size: 18px;
-            color: #e5e7eb;
-        }
-
-        .count-badge {
-            display: inline-block;
-            padding: 18px 32px;
-            border-radius: 8px;
-            font-size: 20px;
-            font-weight: 600;
-            margin-right: 20px;
-        }
-
-        .stButton > button {
-            width: 100%;
-            height: 48px;
-            font-size: 16px;
-            font-weight: 600;
-            border-radius: 8px;
-            border: none;
-            color: white;
-           
-            background-image: linear-gradient(to top, #5f72bd 0%, #9b23ea 100%);
-        }
-    </style>
-    """, unsafe_allow_html=True)
-
-    # ---------------- HEADER ----------------
-    st.markdown("""
-    <div class="gradient header-banner">
-        <h1>Electricity Theft Detection System</h1>
-        <p style="font-size:20px; margin-top:12px;">
-            Distribution Circuit Theft Risk Assessment
+    <div class="fade-in" style="
+        padding:60px;
+        border-radius:25px;
+        background: linear-gradient(135deg,#4f46e5,#9333ea);
+        color:white;
+        text-align:center;
+        box-shadow: 0px 10px 30px rgba(0,0,0,0.4);
+    ">
+        <h1 style="font-size:48px;">⚡ Electricity Theft Detection System</h1>
+        <p style="font-size:22px; margin-top:10px;">
+             platform for detecting electricity theft & prioritizing inspections
         </p>
     </div>
     """, unsafe_allow_html=True)
 
-    # ---------------- INPUT SECTION ----------------
-    st.markdown("<div class='section-gap'></div>", unsafe_allow_html=True)
-    st.markdown("## Meter Reading Input")
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ================== LIVE SYSTEM STATS ==================
+    st.markdown("## 📊 Live System Overview")
+
+    c1, c2, c3 = st.columns(3)
+
+    total_meters = len(st.session_state.meters)
+
+    if total_meters > 0:
+        df_temp = pd.DataFrame(st.session_state.meters)
+        probs = model.predict_proba(df_temp[FEATURE_COLUMNS])[:, 1]
+        high_risk_count = sum(probs * 100 > 60)
+        avg_risk = round((probs * 100).mean(), 2)
+    else:
+        high_risk_count = 0
+        avg_risk = 0
+
+    c1.metric("📟 Meters Analyzed", total_meters)
+    c2.metric("🚨 High Risk Meters", high_risk_count)
+    c3.metric("⚡ Average Theft Risk", f"{avg_risk}%")
+
+
+    # ================== FEATURES ==================
+    st.markdown("## 🔍 Key Capabilities")
+
+    f1, f2, f3 = st.columns(3)
+
+    with f1:
+        st.markdown("""
+        ### 📊 Smart Consumption Analysis
+        - Detects abnormal usage patterns  
+        - Identifies voltage irregularities  
+        - Flags unusual spikes automatically
+        """)
+
+    with f2:
+        st.markdown("""
+        ### 🧠 Machine Learning Engine
+        - Random Forest Classifier  
+        - SMOTE for class imbalance  
+        - Probability-based risk scoring
+        """)
+
+    with f3:
+        st.markdown("""
+        ### 🗺 Location-Aware Detection
+        - Area-wise theft visualization  
+        - Interactive risk maps  
+        - Inspection priority ranking
+        """)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ================== HOW IT WORKS ==================
+    st.markdown("## ⚙️ How the System Works")
+
+    st.markdown("""
+    ➡️ **Step 1:** Meter data is collected (usage, voltage, payment delay, history)  
+    ➡️ **Step 2:** Machine learning model analyzes consumption behavior  
+    ➡️ **Step 3:** Theft risk percentage is generated  
+    ➡️ **Step 4:** High-risk meters are highlighted on map & table  
+    ➡️ **Step 5:** Inspection recommendations are provided
+    """)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ================== CTA ==================
+    st.info("👉 Use the **Add Meter** tab to input meter data and analyze theft risk in real-time.")
+
+
+# ================== ADD METER ==================
+if menu == "➕ Add Meter":
+    st.markdown("## ➕ Add Meter")
 
     with st.form("meter_form"):
-        col1, col2, col3 = st.columns(3, gap="large")
+        c1, c2, c3 = st.columns(3)
 
-        with col1:
-            meter_id = st.text_input("Meter Identifier")
-            usage = st.number_input("Energy Usage (kWh)", min_value=0.0, step=0.1)
-            voltage = st.number_input("Voltage Fluctuations", min_value=0.0, step=0.1)
-            residents = st.number_input("Number of Residents", min_value=1, step=1)
+        with c1:
+            meter_id = st.text_input("Meter ID")
+            usage = st.number_input("Usage (kWh)", 0.0)
+            voltage = st.number_input("Voltage Fluctuations", 0.0)
+            residents = st.number_input("Residents", 1)
 
-        with col2:
-            appliances = st.number_input("Appliance Count", min_value=1, step=1)
-            avg_usage = st.number_input("Average Daily Usage", min_value=0.0, step=0.1)
-            payment_delay = st.number_input("Bill Payment Delay (Days)", min_value=0, step=1)
+        with c2:
+            appliances = st.number_input("Appliance Count", 1)
+            avg_usage = st.number_input("Average Daily Usage", 0.0)
+            delay = st.number_input("Bill Payment Delay (Days)", 0)
 
-        with col3:
-            time_of_day = st.selectbox(
-                "Time of Day",
-                ["Morning", "Afternoon", "Evening", "Night"]
-            )
-            industrial = st.selectbox("Industrial Area Nearby", ["No", "Yes"])
-            theft_history = st.selectbox("Previous Theft History", ["No", "Yes"])
-            usage_spike = st.selectbox("Unusual Usage Spike", ["No", "Yes"])
+        with c3:
+            time_day = st.selectbox("Time of Day", ["Morning","Afternoon","Evening","Night"])
+            industrial = st.selectbox("Industrial Area Nearby", ["No","Yes"])
+            history = st.selectbox("Previous Theft History", ["No","Yes"])
+            spike = st.selectbox("Unusual Usage Spike", ["No","Yes"])
 
-        add_meter = st.form_submit_button("Add Meter to Circuit")
+        submit = st.form_submit_button("➕ Add Meter")
 
-    if add_meter and meter_id.strip():
+    if submit and meter_id:
+        # ===== Fetch location from CSV =====
+        row = location_df[location_df["Meter ID"] == meter_id]
+
+        if not row.empty:
+            area = row.iloc[0]["Area"]
+            lat = row.iloc[0]["Latitude"]
+            lon = row.iloc[0]["Longitude"]
+        else:
+            area = "Unknown"
+            lat = 18.5204
+            lon = 73.8567
+
         st.session_state.meters.append({
             "Meter ID": meter_id,
+            "Area": area,
             "Usage (kWh)": usage,
-            "TimeOfDay": ["Morning", "Afternoon", "Evening", "Night"].index(time_of_day),
+            "TimeOfDay": ["Morning","Afternoon","Evening","Night"].index(time_day),
             "VoltageFluctuations": voltage,
             "NumberOfResidents": residents,
             "ApplianceCount": appliances,
-            "IndustrialAreaNearby": ["No", "Yes"].index(industrial),
-            "PreviousTheftHistory": ["No", "Yes"].index(theft_history),
+            "IndustrialAreaNearby": ["No","Yes"].index(industrial),
+            "PreviousTheftHistory": ["No","Yes"].index(history),
             "AverageDailyUsage": avg_usage,
-            "BillPaymentDelay (days)": payment_delay,
-            "UnusualUsageSpike": ["No", "Yes"].index(usage_spike)
+            "BillPaymentDelay (days)": delay,
+            "UnusualUsageSpike": ["No","Yes"].index(spike),
+            "Latitude": lat,
+            "Longitude": lon
         })
-        st.success(f"Meter '{meter_id}' added to circuit.")
 
-    # ---------------- METER OVERVIEW ----------------
-    if st.session_state.meters:
-        st.markdown("<div class='section-gap'></div>", unsafe_allow_html=True)
-        st.markdown("## Meters Under Analysis")
+        st.success(f"✅ Meter added successfully (Area: {area})")
 
-        overview_df = pd.DataFrame(st.session_state.meters)
-        overview_df.index = overview_df.index + 1
-        overview_df.index.name = "Sr. No."
+# ================== ANALYSIS ==================
+if menu == "📊 Analysis":
+    st.markdown("## 📊 Risk Analysis Dashboard")
 
-        st.dataframe(overview_df, use_container_width=True)
-
-    # ---------------- ANALYSIS ----------------
-    st.markdown("<div class='section-gap'></div>", unsafe_allow_html=True)
-
-    if st.button("Run Theft Risk Analysis"):
-        if not st.session_state.meters:
-            st.warning("No meter data available.")
-            return
-
+    if not st.session_state.meters:
+        st.warning("Please add meters first.")
+    else:
         df = pd.DataFrame(st.session_state.meters)
-        probs = model.predict_proba(df[FEATURE_COLUMNS])[:, 1]
-        df["Risk Percentage"] = (probs * 100).round(2)
 
-        # ---- ONLY HIGH / LOW ----
-        df["Risk Category"] = df["Risk Percentage"].apply(
+        with st.spinner("Analyzing theft risk..."):
+            time.sleep(1)
+
+        probs = model.predict_proba(df[FEATURE_COLUMNS])[:, 1]
+        df["Risk %"] = (probs * 100).round(2)
+
+        df["Risk Category"] = df["Risk %"].apply(
             lambda x: "High Risk" if x > 60 else "Low Risk"
         )
 
-        df = df.sort_values("Risk Percentage", ascending=False)
+        df["Inspection Recommendation"] = df["Risk %"].apply(
+            lambda x: "🚨 Immediate Inspection" if x > 60 else "🟢 Monitor"
+        )
 
-        # ---------------- COUNT BADGES ----------------
-        high = (df["Risk Category"] == "High Risk").sum()
-        low = (df["Risk Category"] == "Low Risk").sum()
+        high_risk = df[df["Risk %"] > 60]
+        if not high_risk.empty:
+            st.error(f"🚨 ALERT: {len(high_risk)} meter(s) require immediate inspection!")
 
-        st.markdown("<div class='section-gap'></div>", unsafe_allow_html=True)
-        st.markdown(f"""
-        <div>
-            <span class="gradient count-badge">High Risk: {high}</span>
-            <span class="gradient count-badge">Low Risk: {low}</span>
-        </div>
-        """, unsafe_allow_html=True)
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Total Meters", len(df))
+        c2.metric("High Risk", len(high_risk))
+        c3.metric("Average Risk", f"{df['Risk %'].mean():.2f}%")
 
-        # ---------------- RESULTS TABLE (NO %) ----------------
-        st.markdown("<div class='section-gap'></div>", unsafe_allow_html=True)
-        st.markdown("## Meter Risk Assessment Results")
+        # ================== MAP ==================
+        st.markdown("### 🗺 Theft Location Map")
+        map_fig = px.scatter_mapbox(
+            df,
+            lat="Latitude",
+            lon="Longitude",
+            color="Risk %",
+            size="Risk %",
+            hover_name="Meter ID",
+            hover_data=["Area","Risk %","Risk Category"],
+            zoom=9,
+            height=450,
+            color_continuous_scale="Reds"
+        )
+        map_fig.update_layout(mapbox_style="open-street-map")
+        st.plotly_chart(map_fig, use_container_width=True)
 
-        result_df = df[["Meter ID", "Risk Category"]].copy()
-        result_df.index = range(1, len(result_df) + 1)
-        result_df.index.name = "Sr. No."
+        # ================== TABLE (FIXED VISIBILITY) ==================
+        def color_rows(row):
+            if row["Risk Category"] == "High Risk":
+                return ["background-color: #fecaca; color: black; font-weight: bold;"] * len(row)
+            else:
+                return ["background-color: #bbf7d0; color: black;"] * len(row)
 
-        st.dataframe(result_df, use_container_width=True)
+        st.markdown("### 📋 Detailed Risk Table")
+        st.dataframe(
+            df[[
+                "Meter ID",
+                "Area",
+                "Risk %",
+                "Risk Category",
+                "Inspection Recommendation"
+            ]].style.apply(color_rows, axis=1),
+            use_container_width=True
+        )
 
-        # ---------------- HIGH-RISK DETAILS ----------------
-        high_df = df[df["Risk Category"] == "High Risk"]
+# ================== ABOUT ==================
+if menu == "ℹ️ About":
+    st.markdown("""
+    <div style="
+        padding:30px;
+        border-radius:15px;
+        background: linear-gradient(135deg,#111827,#1f2933);
+        color:white;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    ">
+        <h2>ℹ️ About</h2>
+        <h4>Electricity Theft Detection System</h4>
+        <p style="font-size:16px; line-height:1.6;">
+            This application is designed to assist electricity authorities in identifying
+            potential electricity theft using machine learning techniques.
+        </p>
+        <ul style="font-size:16px; line-height:1.8;">
+            <li>📍 Meter ID to Area mapping using CSV-based location data</li>
+            <li>🧠 Theft risk prediction based on consumption behavior</li>
+            <li>🗺️ Location-aware visualization of high-risk meters</li>
+            <li>🚨 Inspection prioritization using ML-based risk scoring</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
 
-        if not high_df.empty:
-            st.markdown("<div class='section-gap'></div>", unsafe_allow_html=True)
-            st.markdown(f"""
-            <div class="gradient action-card">
-                <h3>Meters Flagged for Immediate Inspection</h3>
-                <p><b>Total High-Risk Meters:</b> {len(high_df)}</p>
-                <ul>
-                    {''.join(f"<li>{row['Meter ID']} – {row['Risk Percentage']}%</li>" for _, row in high_df.iterrows())}
-                </ul>
-                <p style="margin-top:16px;">
-                    <b>Recommended Action:</b><br>
-                    Immediate physical inspection is strongly recommended for all listed meters.
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.success("No high-risk meters detected in this circuit.")
-
-    # ---------------- RESET ----------------
-    st.markdown("<div class='section-gap'></div>", unsafe_allow_html=True)
-    if st.button("Reset Circuit Data"):
-        st.session_state.clear()
-        st.rerun()
-
-
-if __name__ == "__main__":
-    main()
+# ================== RESET ==================
+st.sidebar.markdown("---")
+if st.sidebar.button("🔄 Reset Data"):
+    st.session_state.clear()
+    st.rerun()

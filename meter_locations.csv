@@ -1,0 +1,16 @@
+Meter ID,Area,City,Latitude,Longitude,Zone
+MTR001,Kothrud,Pune,18.5074,73.8077,West
+MTR002,Hinjewadi,Pune,18.5913,73.7389,IT Corridor
+MTR003,Baner,Pune,18.5590,73.7890,North-West
+MTR004,Wakad,Pune,18.5983,73.7655,IT Corridor
+MTR005,Aundh,Pune,18.5602,73.8071,North
+MTR006,Hadapsar,Pune,18.5089,73.9260,East
+MTR007,Kharadi,Pune,18.5510,73.9483,East IT Hub
+MTR008,Viman Nagar,Pune,18.5679,73.9143,East
+MTR009,Shivaji Nagar,Pune,18.5308,73.8475,Central
+MTR010,Swargate,Pune,18.5018,73.8636,South
+MTR011,Andheri East,Mumbai,19.1197,72.8468,Western
+MTR012,Bandra West,Mumbai,19.0596,72.8295,Western
+MTR013,Thane West,Thane,19.2183,72.9781,Central
+MTR014,Nerul,Navi Mumbai,19.0330,73.0297,Harbour
+MTR015,Vashi,Navi Mumbai,19.0771,72.9986,Harbour
